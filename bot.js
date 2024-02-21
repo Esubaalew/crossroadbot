@@ -1,5 +1,13 @@
 const {Telegraf, session} = require('telegraf')
-const {insertUser, insertAdmin, isAdmin, isUser, findUserById, findAdminById} = require('./crud')
+const {
+    insertUser,
+    insertAdmin,
+    isAdmin, isUser,
+    findUserById,
+    findAdminById,
+    deleteUserById,
+    deleteAdminById
+} = require('./crud')
 const {message} = require('telegraf/filters')
 
 
@@ -60,6 +68,31 @@ bot.command('register', async (ctx) => {
     }
 });
 
+// Unregister command
+bot.command('unregister', async (ctx) => {
+    const telegramId = ctx.from.id;
+
+    // Check if the user is a regular user
+    const isRegularUser = await isUser(telegramId);
+    const isAdminUser = await isAdmin(telegramId);
+
+
+
+    if (isRegularUser) {
+        // Delete the user
+        await deleteUserById(telegramId);
+        ctx.reply(`You have been unregistered. \n\n ${formatDateTimeInEAT()}`);
+    } else {
+
+        if (isAdminUser) {
+            ctx.reply(`Admins cannot unregister. If needed, contact support.`);
+        } else {
+            ctx.reply(`You are not registered as a regular user. Use /register to register.`);
+        }
+    }
+});
+
+
 bot.command('myinfo', async (ctx) => {
     const telegramId = ctx.from.id;
 
@@ -91,5 +124,6 @@ bot.command('myinfo', async (ctx) => {
         ctx.reply(`You are not registered as a regular user. Use /register to register.`);
     }
 });
+
 
 bot.launch().then(() => console.log("Bot is living"));

@@ -118,19 +118,40 @@ async function deleteAdminById(adminId) {
     }
 }
 
-// // Example usage within an async function
-// async function run() {
-//     try {
-//         const result = await deleteUserById(1648265210);
-//         console.log(result);
-//     } catch (error) {
-//         console.error('Error:', error);
-//     } finally {
-//         // Close the Sequelize connection (if needed)
-//         await sequelize.close();
-//     }
-// }
-//
-// // Call the async function
-// run();
-module.exports = {isAdmin, isUser, findAdminById, findUserById, insertUser, insertAdmin, deleteAdminById, deleteUserById};
+
+/ Function to get all users from the Users table
+async function getAllUsers() {
+    try {
+        const users = await User.findAll();
+        console.log('All Users:', users.map(user => user.toJSON()));
+        return users;
+    } catch (error) {
+        console.error('Error getting all users:', error);
+        throw error;
+    }
+}
+
+// Function to get all admins from the Admins table
+async function getAllAdmins() {
+    try {
+        const admins = await Admin.findAll();
+        console.log('All Admins:', admins.map(admin => admin.toJSON()));
+        return admins;
+    } catch (error) {
+        console.error('Error getting all admins:', error);
+        throw error;
+    }
+}
+
+module.exports = {
+    isAdmin,
+    isUser,
+    findAdminById,
+    findUserById,
+    insertUser,
+    insertAdmin,
+    deleteAdminById,
+    deleteUserById,
+    getAllUsers,
+    getAllAdmins,
+};
