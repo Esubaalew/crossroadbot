@@ -119,7 +119,7 @@ async function deleteAdminById(adminId) {
 }
 
 
-/ Function to get all users from the Users table
+// Function to get all users from the Users table
 async function getAllUsers() {
     try {
         const users = await User.findAll();

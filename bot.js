@@ -6,9 +6,12 @@ const {
     findUserById,
     findAdminById,
     deleteUserById,
-    deleteAdminById
+    deleteAdminById,
+    getAllAdmins, getAllUsers
 } = require('./crud')
+
 const {message} = require('telegraf/filters')
+const {Admin} = require("./database");
 
 
 const bot = new Telegraf(process.env.TOKEN)
@@ -34,12 +37,12 @@ function formatDateTimeInEAT() {
 bot.start(async (ctx) => {
     const telegramId = ctx.from.id;
 
-    // Check if the user is an admin
+
     const isAdminUser = await isAdmin(telegramId);
     if (isAdminUser) {
         ctx.reply(`Welcome back, Admin!\n\n ${formatDateTimeInEAT()}`);
     } else {
-        // Check if the user is a regular user
+
         const isRegularUser = await isUser(telegramId);
         if (isRegularUser) {
             ctx.reply(`Welcome back, User!\n see your info using /myinfo. \n\n ${formatDateTimeInEAT()}`);
@@ -72,14 +75,13 @@ bot.command('register', async (ctx) => {
 bot.command('unregister', async (ctx) => {
     const telegramId = ctx.from.id;
 
-    // Check if the user is a regular user
+
     const isRegularUser = await isUser(telegramId);
     const isAdminUser = await isAdmin(telegramId);
 
 
-
     if (isRegularUser) {
-        // Delete the user
+
         await deleteUserById(telegramId);
         ctx.reply(`You have been unregistered. \n\n ${formatDateTimeInEAT()}`);
     } else {
@@ -96,11 +98,10 @@ bot.command('unregister', async (ctx) => {
 bot.command('myinfo', async (ctx) => {
     const telegramId = ctx.from.id;
 
-    // Check if the user is a regular user
     const isRegularUser = await isUser(telegramId);
 
     if (isRegularUser) {
-        // Fetch user information
+
         const user = await findUserById(telegramId);
 
         if (user) {
@@ -122,6 +123,51 @@ bot.command('myinfo', async (ctx) => {
         }
     } else {
         ctx.reply(`You are not registered as a regular user. Use /register to register.`);
+    }
+});
+
+// Command to list all users (only for admins)
+bot.command('listusers', async (ctx) => {
+
+    const isAdminUser = await isAdmin(ctx.from.id);
+
+    if (isAdminUser) {
+
+        const admins = await getAllAdmins();
+        const users = await getAllUsers();
+
+
+        admins.sort((a, b) => a.createdAt - b.createdAt);
+
+
+        users.sort((a, b) => a.createdAt - b.createdAt);
+
+        const formattedList = [];
+
+
+        if (admins.length > 0) {
+            formattedList.push('*Admins*');
+            admins.forEach((admin, index) => {
+                const adminInfo = `${index + 1}. @${admin.username || 'ID ' + admin.id}: ${admin.createdAt}`;
+                formattedList.push(adminInfo);
+            });
+            formattedList.push('...');
+        }
+
+
+        if (users.length > 0) {
+            formattedList.push('*Users*');
+            users.forEach((user, index) => {
+                const userInfo = `${index + 1}. @${user.username || 'ID ' + user.id}: ${user.createdAt}`;
+                formattedList.push(userInfo);
+            });
+        } else {
+            ctx.reply(`There are no users`)
+        }
+
+        ctx.reply(`List of Users and Admins:\n\n${formattedList.join('\n')}`);
+    } else {
+        ctx.reply('You do not have permission to use this command.');
     }
 });
 
