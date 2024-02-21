@@ -78,33 +78,4 @@ async function isUser(telegramId) {
     }
 }
 
-
-
-// // Usage examples
-// (async () => {
-//     try {
-//         await insertAdmin(1648265210, 'esubaalew');
-//     } catch (error) {
-//         console.error('Error in main:', error);
-//     } finally {
-//         // Close the Sequelize connection (if needed)
-//         await sequelize.close();
-//     }
-// })();
-
-// (async () => {
-//     try {
-//         const isAdminUser = await isAdmin(1648265210);
-//         console.log('Is admin:', isAdminUser);
-//       let value =  await findAdminById(1648265210);
-//       console.log(value)
-//
-//         // const isRegularUser = await isUser(123456789);
-//         // console.log('Is regular user:', isRegularUser);
-//     } catch (error) {
-//         console.error('Error in main:', error);
-//     } finally {
-//         // Close the Sequelize connection (if needed)
-//         await sequelize.close();
-//     }
-// })();
+module.exports = {isAdmin, isUser, findAdminById, findUserById, insertUser, insertAdmin};
