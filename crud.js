@@ -78,4 +78,59 @@ async function isUser(telegramId) {
     }
 }
 
-module.exports = {isAdmin, isUser, findAdminById, findUserById, insertUser, insertAdmin};
+// Function to delete a user by ID from the Users table
+async function deleteUserById(userId) {
+    try {
+        const deletedUser = await User.destroy({
+            where: { id: userId },
+        });
+
+        if (deletedUser > 0) {
+            console.log(`User with ID ${userId} deleted successfully.`);
+            return true;
+        } else {
+            console.log(`User with ID ${userId} not found.`);
+            return false;
+        }
+    } catch (error) {
+        console.error(`Error deleting user with ID ${userId}:`, error);
+        throw error;
+    }
+}
+
+// Function to delete an admin by ID from the Admins table
+async function deleteAdminById(adminId) {
+    try {
+        const deletedAdmin = await Admin.destroy({
+            where: { id: adminId },
+        });
+
+        if (deletedAdmin > 0) {
+            console.log(`Admin with ID ${adminId} deleted successfully.`);
+            return true;
+        } else {
+            console.log(`Admin with ID ${adminId} not found.`);
+            return false;
+        }
+    } catch (error) {
+        console.error(`Error deleting admin with ID ${adminId}:`, error);
+        throw error;
+    }
+}
+
+// // Example usage within an async function
+// async function run() {
+//     try {
+//         const result = await deleteUserById(1648265210);
+//         console.log(result);
+//     } catch (error) {
+//         console.error('Error:', error);
+//     } finally {
+//         // Close the Sequelize connection (if needed)
+//         await sequelize.close();
+//     }
+// }
+//
+// // Call the async function
+// run();
+module.exports = {isAdmin, isUser, findAdminById, findUserById, insertUser, insertAdmin, deleteAdminById, deleteUserById};
