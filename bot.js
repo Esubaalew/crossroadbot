@@ -34,8 +34,28 @@ bot.start(async (ctx) => {
             ctx.reply(`Welcome back, User!\n\n ${formatDateTimeInEAT()}`);
         }
         else {
-            ctx.reply(`Hey I am CrossRoadBot, Please  hit /Register to register !\n\n ${formatDateTimeInEAT()}`);
+            ctx.reply(`Hey, I am CrossRoadBot!!\nPlease hit /register to register !\n\n ${formatDateTimeInEAT()}`);
         }
     }
 });
+
+// Register command
+bot.command('register', async (ctx) => {
+    const telegramId = ctx.from.id;
+    const username = ctx.from.username;
+
+    const isAdminUser = await isAdmin(telegramId);
+    const isRegularUser = await isUser(telegramId);
+
+    if (isAdminUser) {
+        ctx.reply(`You are already registered as an Admin!\n\n ${formatDateTimeInEAT()}`);
+    } else if (isRegularUser) {
+        ctx.reply(`You are already registered as a User!\n\n ${formatDateTimeInEAT()}`);
+    } else {
+
+        await insertUser(telegramId, username);
+        ctx.reply(`You have been registered as a User. \n\n ${formatDateTimeInEAT()}`);
+    }
+});
+
 bot.launch().then(() => console.log("Bot is living"));
