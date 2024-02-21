@@ -56,8 +56,22 @@ const Admin = sequelize.define('Admin', {
             allowNull: false,
             defaultValue: 'admin'
         },
+        madeAt: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW
+        }
     },
     {tableName: "Admins"}
 );
+
+async function syncDatabase() {
+    try {
+        await sequelize.sync();
+        console.log('Database synchronized successfully.');
+    } catch (error) {
+        console.error('Error synchronizing database:', error);
+    }
+}
+
 
 module.exports = {sequelize, User, Admin};
