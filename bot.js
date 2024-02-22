@@ -16,6 +16,8 @@ const {
 const {message} = require('telegraf/filters')
 const {Admin} = require("./database");
 
+const fs = require('fs');
+
 
 const bot = new Telegraf(process.env.TOKEN)
 bot.use(session());
@@ -36,6 +38,7 @@ function formatDateTimeInEAT() {
 
     return currentDate.toLocaleString('en-US', options);
 }
+
 
 bot.start(async (ctx) => {
     const telegramId = ctx.from.id;
@@ -78,17 +81,23 @@ bot.command('register', async (ctx) => {
 bot.command('unregister', async (ctx) => {
     const telegramId = ctx.from.id;
 
-
     const isRegularUser = await isUser(telegramId);
     const isAdminUser = await isAdmin(telegramId);
 
-
     if (isRegularUser) {
+        // Check if the user has a pending admin request
+        const request = await findRequestById(telegramId);
 
+        if (request) {
+            // Remove the user from the Requests table
+            await deleteRequestById(telegramId);
+        }
+
+        // Remove the user from the Users table
         await deleteUserById(telegramId);
+
         ctx.reply(`You have been unregistered. \n\n ${formatDateTimeInEAT()}`);
     } else {
-
         if (isAdminUser) {
             ctx.reply(`Admins cannot unregister. If needed, contact support.`);
         } else {
@@ -129,50 +138,61 @@ bot.command('myinfo', async (ctx) => {
     }
 });
 
+
 // Command to list all users (only for admins)
 bot.command('listusers', async (ctx) => {
-
     const isAdminUser = await isAdmin(ctx.from.id);
 
     if (isAdminUser) {
-
         const admins = await getAllAdmins();
         const users = await getAllUsers();
 
-
         admins.sort((a, b) => a.createdAt - b.createdAt);
-
-
         users.sort((a, b) => a.createdAt - b.createdAt);
 
         const formattedList = [];
 
+        // Function to format user or admin information
+        const formatUser = (user, index) => {
+            return `${index + 1}. @${user.username || 'ID ' + user.id}: ${user.createdAt}`;
+        };
 
         if (admins.length > 0) {
             formattedList.push('*Admins*');
             admins.forEach((admin, index) => {
-                const adminInfo = `${index + 1}. @${admin.username || 'ID ' + admin.id}: ${admin.createdAt}`;
-                formattedList.push(adminInfo);
+                formattedList.push(formatUser(admin, index));
             });
             formattedList.push('...');
+        } else {
+            formattedList.push('*Admins*');
+            formattedList.push('No admins found.');
         }
-
 
         if (users.length > 0) {
             formattedList.push('*Users*');
             users.forEach((user, index) => {
-                const userInfo = `${index + 1}. @${user.username || 'ID ' + user.id}: ${user.createdAt}`;
-                formattedList.push(userInfo);
+                formattedList.push(formatUser(user, index));
             });
         } else {
-            ctx.reply(`There are no users`)
+            formattedList.push('*Users*');
+            formattedList.push('No users found.');
         }
 
-        ctx.reply(`List of Users and Admins:\n\n${formattedList.join('\n')}`);
+        const fullListText = formattedList.join('\n');
+        const fileName = 'user_list.txt';
+
+        fs.writeFileSync(fileName, fullListText);
+
+        const limitedListText = formattedList.slice(0, 10).join('\n');
+        await ctx.replyWithDocument({ source: fileName }, { caption: `List of Users and Admins\n\n ${limitedListText}\n\n see all list in the file` });
+
+        // Remove the temporary file
+        fs.unlinkSync(fileName);
     } else {
         ctx.reply('You do not have permission to use this command.');
     }
 });
+
 // Admin register command
 bot.command('adminregister', async (ctx) => {
     const telegramId = ctx.from.id;
@@ -185,7 +205,7 @@ bot.command('adminregister', async (ctx) => {
         // Fetch all admin requests
         const requests = await getAllRequests();
 
-        // Sort requests by creation date
+
         requests.sort((a, b) => a.createdAt - b.createdAt);
 
         // Format the list with usernames and IDs
@@ -220,15 +240,14 @@ bot.command('adminregister', async (ctx) => {
 bot.command('cancel', async (ctx) => {
     const telegramId = ctx.from.id;
 
-    // Check if the user is a regular user
     const isRegularUser = await isUser(telegramId);
 
     if (isRegularUser) {
-        // Check if the user has a pending request
+
         const hasPendingRequest = await findRequestById(telegramId);
 
         if (hasPendingRequest) {
-            // Delete the user from the request table
+
             await deleteRequestById(telegramId);
             ctx.reply('Your admin request has been canceled.');
         } else {
@@ -317,5 +336,63 @@ bot.command('reject', async (ctx) => {
     }
 });
 
+bot.on('text', (ctx) => {
+    const messageText = ctx.message.text;
 
+    if (messageText.startsWith('/')) {
+        ctx.reply(`Command "${messageText}" is not recognized. Use Menu to see available commands.`);
+    } else {
+        ctx.reply('I can only understand commands. Use Menu to talk with me');
+    }
+});
+
+bot.on('photo', (ctx) => {
+    ctx.reply("Sorry, I don't process photo messages currently.");
+});
+
+// Handling videos
+bot.on('video', (ctx) => {
+    ctx.reply("Sorry, I don't process video messages currently.");
+});
+
+
+bot.on('audio', (ctx) => {
+    ctx.reply("Sorry, I don't process audio files currently.");
+});
+
+
+bot.on('video_note', (ctx) => {
+    ctx.reply("Sorry, I don't process video messages (video notes) currently.");
+});
+
+// Handling documents/files
+bot.on('document', (ctx) => {
+    ctx.reply("Sorry, I don't process document messages currently.");
+});
+
+bot.on('poll', (ctx) => {
+    ctx.reply("Sorry, I don't process polls currently.");
+});
+
+
+bot.on('sticker', (ctx) => {
+    ctx.reply("Sorry, I don't process stickers currently.");
+});
+
+bot.on('voice', (ctx) => {
+    ctx.reply("Sorry, I don't process voice messages currently.");
+});
+
+
+bot.on('contact', (ctx) => {
+    ctx.reply("Sorry, I don't process contact messages currently.");
+});
+
+bot.on('animation', (ctx) => {
+    ctx.reply("Sorry, I don't process animated GIFs currently.");
+});
+
+bot.on('location', (ctx) => {
+    ctx.reply("Sorry, I don't process location messages currently.");
+});
 bot.launch().then(() => console.log("Bot is living"));
