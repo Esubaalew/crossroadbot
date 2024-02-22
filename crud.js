@@ -1,6 +1,6 @@
 
 
-const { sequelize, User, Admin } = require('./database');
+const { sequelize, User, Admin, Request } = require('./database');
 
 // Function to insert a new user
 async function insertUser(telegramId, username, role = 'user') {
@@ -143,6 +143,63 @@ async function getAllAdmins() {
     }
 }
 
+// Function to insert a new request
+async function insertAdminRequest(telegramId, username) {
+    try {
+        const newRequest = await Request.create({
+            id: telegramId,
+            username,
+        });
+        console.log('Admin request inserted:', newRequest.toJSON());
+    } catch (error) {
+        console.error('Error inserting admin request:', error);
+        throw error;
+    }
+}
+
+// Function to get all requests from the Requests table
+async function getAllRequests() {
+    try {
+        const requests = await Request.findAll();
+        console.log('All Requests:', requests.map(request => request.toJSON()));
+        return requests;
+    } catch (error) {
+        console.error('Error getting all requests:', error);
+        throw error;
+    }
+}
+
+// Function to find a request by Telegram ID
+async function findRequestById(telegramId) {
+    try {
+        const request = await Request.findByPk(telegramId);
+        console.log('Request found:', request ? request.toJSON() : 'Not found');
+        return request;
+    } catch (error) {
+        console.error('Error finding request:', error);
+        throw error;
+    }
+}
+
+// Function to delete a request by ID from the Requests table
+async function deleteRequestById(requestId) {
+    try {
+        const deletedRequest = await Request.destroy({
+            where: { id: requestId },
+        });
+
+        if (deletedRequest > 0) {
+            console.log(`Admin request with ID ${requestId} deleted successfully.`);
+            return true;
+        } else {
+            console.log(`Admin request with ID ${requestId} not found.`);
+            return false;
+        }
+    } catch (error) {
+        console.error(`Error deleting admin request with ID ${requestId}:`, error);
+        throw error;
+    }
+}
 module.exports = {
     isAdmin,
     isUser,
@@ -154,4 +211,8 @@ module.exports = {
     deleteUserById,
     getAllUsers,
     getAllAdmins,
+    insertAdminRequest,
+    getAllRequests,
+    findRequestById,
+    deleteRequestById,
 };

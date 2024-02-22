@@ -64,6 +64,26 @@ const Admin = sequelize.define('Admin', {
     {tableName: "Admins"}
 );
 
+const Request = sequelize.define('Request', {
+
+        id: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            autoIncrement: false,
+            primaryKey: true
+        },
+        username: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        createdAt: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW,
+        },
+    },
+    { tableName: "Requests" }
+);
+
 async function syncDatabase() {
     try {
         await sequelize.sync();
@@ -74,4 +94,4 @@ async function syncDatabase() {
 }
 
 
-module.exports = {sequelize, User, Admin};
+module.exports = {sequelize, User, Admin, Request};
