@@ -7,7 +7,10 @@ const {
     findAdminById,
     deleteUserById,
     deleteAdminById,
-    getAllAdmins, getAllUsers
+    getAllAdmins, getAllUsers, insertAdminRequest,
+    getAllRequests,
+    findRequestById,
+    deleteRequestById,
 } = require('./crud')
 
 const {message} = require('telegraf/filters')
@@ -166,6 +169,149 @@ bot.command('listusers', async (ctx) => {
         }
 
         ctx.reply(`List of Users and Admins:\n\n${formattedList.join('\n')}`);
+    } else {
+        ctx.reply('You do not have permission to use this command.');
+    }
+});
+// Admin register command
+bot.command('adminregister', async (ctx) => {
+    const telegramId = ctx.from.id;
+
+    // Check if the user is an admin
+    const isAdminUser = await isAdmin(telegramId);
+    const isRegularUser = await isUser(telegramId);
+
+    if (isAdminUser) {
+        // Fetch all admin requests
+        const requests = await getAllRequests();
+
+        // Sort requests by creation date
+        requests.sort((a, b) => a.createdAt - b.createdAt);
+
+        // Format the list with usernames and IDs
+        const formattedList = requests.map((request, index) => {
+            const userInfo = `${index + 1}. @${request.username || 'ID ' + request.id}: ${request.id}`;
+            return userInfo;
+        });
+
+        if (formattedList.length > 0) {
+            ctx.reply(`List of Admin Requests:\n\n${formattedList.join('\n')}\n\n you can /reject userid or /approve userid `);
+        } else {
+            ctx.reply('No pending admin requests.');
+        }
+    } else if (isRegularUser) {
+        // Check if the user already has a pending request
+        const existingRequest = await findRequestById(telegramId);
+
+        if (existingRequest) {
+            const requestDate = existingRequest.createdAt.toLocaleString();
+            ctx.reply(`You already have a pending admin request submitted on ${requestDate}.\n\n you can cancel your request by /cancel`);
+        } else {
+            // Insert admin request
+            await insertAdminRequest(telegramId, ctx.from.username);
+            ctx.reply(`Your request to become an admin has been submitted. \n\n you can cancel your request by /cancel`);
+        }
+    } else {
+        ctx.reply('You do not have permission to use this command. please /register first');
+    }
+});
+
+// Cancel command
+bot.command('cancel', async (ctx) => {
+    const telegramId = ctx.from.id;
+
+    // Check if the user is a regular user
+    const isRegularUser = await isUser(telegramId);
+
+    if (isRegularUser) {
+        // Check if the user has a pending request
+        const hasPendingRequest = await findRequestById(telegramId);
+
+        if (hasPendingRequest) {
+            // Delete the user from the request table
+            await deleteRequestById(telegramId);
+            ctx.reply('Your admin request has been canceled.');
+        } else {
+            ctx.reply('No pending admin request found to cancel.');
+        }
+    } else {
+        ctx.reply('You do not have permission to use this command.');
+    }
+});
+// Approve command
+bot.command('approve', async (ctx) => {
+    const telegramId = ctx.from.id;
+
+    const isAdminUser = await isAdmin(telegramId);
+
+    if (isAdminUser) {
+
+        const targetId = (ctx.message.text.split(' ')[1] || '').trim();
+
+
+        if (!targetId) {
+            ctx.reply('Please include a valid Telegram ID to approve. like /approve id');
+        } else {
+
+            const request = await findRequestById(targetId);
+
+            if (request) {
+
+                await deleteRequestById(targetId);
+                await deleteUserById(targetId);
+                await insertAdmin(targetId, request.username);
+
+                // Send a private message to the user
+                const userTelegramId = request.id;
+                await bot.telegram.sendMessage(userTelegramId, 'Congratulations! Your request to become an admin has been approved. You are now an admin.');
+
+                ctx.reply(`Admin request for user @${request.username || 'ID ' + targetId} has been approved. A private message has been sent to notify the user.`);
+            } else {
+                if (await isAdmin(targetId)) {
+                    ctx.reply('No pending admin request found for the provided Telegram ID. This user is an admin already');
+                } else if (await isUser(targetId)) {
+                    ctx.reply('No pending admin request found for the provided Telegram ID. This user is a regular user ');
+                } else {
+                    ctx.reply('No pending admin request found for the provided Telegram ID. This user is unregistered yet');
+                }
+            }
+        }
+    } else {
+        ctx.reply('You do not have permission to use this command.');
+    }
+});
+
+// Reject command
+bot.command('reject', async (ctx) => {
+    const telegramId = ctx.from.id;
+    const isAdminUser = await isAdmin(telegramId);
+
+    if (isAdminUser) {
+        const targetId = (ctx.message.text.split(' ')[1] || '').trim();
+
+        if (!targetId) {
+            ctx.reply('Please include a valid Telegram ID to reject. like /reject id');
+        } else {
+            const request = await findRequestById(targetId);
+
+            if (request) {
+                await deleteRequestById(targetId);
+
+                // Send a private message to the user (optional)
+                const userTelegramId = request.id;
+                await bot.telegram.sendMessage(userTelegramId, 'Your request to become an admin has been rejected. If you have any questions, please contact support.');
+
+                ctx.reply(`Admin request for user @${request.username || 'ID ' + targetId} has been rejected. A private message has been sent to notify the user.`);
+            } else {
+                if (await isAdmin(targetId)) {
+                    ctx.reply('No pending admin request found for the provided Telegram ID. This user is an admin already');
+                } else if (await isUser(targetId)) {
+                    ctx.reply('No pending admin request found for the provided Telegram ID. This user is a regular user ');
+                } else {
+                    ctx.reply('No pending admin request found for the provided Telegram ID. This user is unregistered yet');
+                }
+            }
+        }
     } else {
         ctx.reply('You do not have permission to use this command.');
     }
