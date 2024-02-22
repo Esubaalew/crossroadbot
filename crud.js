@@ -2,7 +2,6 @@
 
 const { sequelize, User, Admin, Request } = require('./database');
 
-// Function to insert a new user
 async function insertUser(telegramId, username, role = 'user') {
     try {
         const newUser = await User.create({
@@ -200,6 +199,8 @@ async function deleteRequestById(requestId) {
         throw error;
     }
 }
+
+
 module.exports = {
     isAdmin,
     isUser,
