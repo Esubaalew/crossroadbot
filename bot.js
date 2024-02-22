@@ -151,7 +151,6 @@ bot.command('listusers', async (ctx) => {
 
         const formattedList = [];
 
-        // Function to format user or admin information
         const formatUser = (user, index) => {
             return `${index + 1}. @${user.username || 'ID ' + user.id}: ${user.createdAt}`;
         };
@@ -185,7 +184,6 @@ bot.command('listusers', async (ctx) => {
         const limitedListText = formattedList.slice(0, 10).join('\n');
         await ctx.replyWithDocument({ source: fileName }, { caption: `List of Users and Admins\n\n ${limitedListText}\n\n see all list in the file` });
 
-        // Remove the temporary file
         fs.unlinkSync(fileName);
     } else {
         ctx.reply('You do not have permission to use this command.');
@@ -201,7 +199,6 @@ bot.command('adminregister', async (ctx) => {
     const isRegularUser = await isUser(telegramId);
 
     if (isAdminUser) {
-        // Fetch all admin requests
         const requests = await getAllRequests();
 
 
@@ -219,7 +216,7 @@ bot.command('adminregister', async (ctx) => {
             ctx.reply('No pending admin requests.');
         }
     } else if (isRegularUser) {
-        // Check if the user already has a pending request
+
         const existingRequest = await findRequestById(telegramId);
 
         if (existingRequest) {
@@ -229,6 +226,14 @@ bot.command('adminregister', async (ctx) => {
             // Insert admin request
             await insertAdminRequest(telegramId, ctx.from.username);
             ctx.reply(`Your request to become an admin has been submitted. \n\n you can cancel your request by /cancel`);
+
+            // Notify all admins about the new request
+            const allAdmins = await getAllAdmins();
+
+            await Promise.all(allAdmins.map(async (admin) => {
+                // Your asynchronous operation here
+                await bot.telegram.sendMessage(admin.id, `New admin request:\n\nUser: @${ctx.from.username}\nID: ${telegramId}\nDate: ${formatDateTimeInEAT()}`);
+            }));
         }
     } else {
         ctx.reply('You do not have permission to use this command. please /register first');

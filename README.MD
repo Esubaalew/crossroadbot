@@ -94,6 +94,7 @@ You can access CrossRoadBot on Telegram by clicking on the following link: [cros
     - Admins can view and manage admin requests using this command.
     - Regular users can use this command to submit a request to become an admin. The request can be canceled using /cancel.
     - Admins can then use the /approve or /reject commands to manage the admin requests.
+    - All admins will be notified when the user requests for an admin
 
 
 ### `/cancel`
