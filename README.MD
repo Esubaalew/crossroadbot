@@ -182,7 +182,7 @@ You can access CrossRoadBot on Telegram by clicking on the following link: [cros
 - Admins have specific commands for managing admin requests (`/adminregister`, `/approve`, `/reject`), while regular users have commands like `/register`, `/unregister`, `/myinfo`, and `/cancel`.
 
 
-**Tech Stacks:**
+### **Tech Stacks:**
 
 1. **Sequelize:**
   
