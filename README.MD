@@ -181,6 +181,9 @@ You can access CrossRoadBot on Telegram by clicking on the following link: [cros
 - The bot processes text messages as commands. If an unrecognized command or plain text is entered, the user is notified.
 - Certain message types (e.g., photo, video, audio) are currently not supported, and the user will be informed.
 - Admins have specific commands for managing admin requests (`/adminregister`, `/approve`, `/reject`), while regular users have commands like `/register`, `/unregister`, `/myinfo`, and `/cancel`.
+- Admins can't delete other users unless users delete themselves 
+- Admins can't delete themselves or other users
+- And these are just rules
 
 
 ### **Tech Stacks:**
